@@ -10,7 +10,7 @@ Installation
 --------
 
 ```bash
-cordova plugin add Cordova-SMS-Plugin
+cordova plugin add CordovaSMS
 ```
 
 Usage
