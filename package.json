@@ -1,0 +1,24 @@
+{
+  "name": "CordovaSMS",
+  "version": "0.0.1",
+  "description": "A SMS Plugin to enable to send & receive SMS on Cordova based Android App's",
+  "cordova": {
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": "npm/npm",
+  "keywords": [
+    "cordova",
+    "cordova-android"
+  ],
+  "engines": [
+    {
+      "name": "cordova-android",
+      "version": ">=4.0.0"
+    }
+  ],
+  "author": "Ramkumar Murugadoss",
+  "license": "Apache 2.0"
+}
+

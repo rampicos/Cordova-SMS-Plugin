@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+           id="CordovaSMS"
+      version="0.0.1">
+    <name>Cordova SMS Plugin</name>
+    <author>Ramkumar Murugadoss</author>
+    <description>A SMS Plugin to enable to send & receive SMS on Cordova based Android App's</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,sms,utils</keywords>
+    <info>
+        A SMS Plugin to enable to send & receive SMS on Cordova based Android App's
+    </info>
+
+    <engines>
+        <engine name="cordova-android" version=">=4.0.0" />
+    </engines>
+
+    <js-module src="www/CordovaSMS.js" name="CordovaSMS">
+        <clobbers target="CordovaSMS" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="CordovaSMS">
+                <param name="android-package" value="com.ramkumar.cordovaplugins.sms.CordovaSMS"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.SEND_SMS" />
+            <uses-permission android:name="android.permission.RECEIVE_SMS" />
+            <uses-permission android:name="android.permission.READ_SMS" />
+            <uses-permission android:name="android.permission.WRITE_SMS" />
+            <uses-permission android:name="android.permission.RECEIVE_MMS" />
+        </config-file>
+
+         <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <!-- BroadcastReceiver that listens to incoming SMS messages -->
+            <receiver
+                android:name="com.ramkumar.cordovaplugins.sms.receivers.SMSBroadcastReceiver"
+                android:permission="android.permission.BROADCAST_SMS" >
+                <intent-filter>
+                    <action android:name="android.provider.Telephony.SMS_DELIVER" />
+                </intent-filter>
+            </receiver>
+
+            <!-- BroadcastReceiver that listens to incoming MMS messages -->
+            <receiver
+                android:name="com.ramkumar.cordovaplugins.sms.receivers.MMSBroadcastReceiver"
+                android:permission="android.permission.BROADCAST_WAP_PUSH" >
+                <intent-filter>
+                    <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                    <data android:mimeType="application/vnd.wap.mms-message" />
+                </intent-filter>
+            </receiver>
+
+            <!-- Activity for composing SMS/MMS messages -->
+            <activity
+                android:name="com.ramkumar.cordovaplugins.sms.ComposeSMSActivity">
+                <intent-filter>
+                    <action android:name="android.intent.action.SEND" />
+                    <action android:name="android.intent.action.SENDTO" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="sms" />
+                    <data android:scheme="smsto" />
+                    <data android:scheme="mms" />
+                    <data android:scheme="mmsto" />
+                </intent-filter>
+            </activity>
+
+            <!-- Service that delivers messages for "Quick Response" -->
+            <service
+                android:name="com.ramkumar.cordovaplugins.sms.HeadlessSmsSendService"
+                android:exported="true"
+                android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
+                <intent-filter>
+                    <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <data android:scheme="sms" />
+                    <data android:scheme="smsto" />
+                    <data android:scheme="mms" />
+                    <data android:scheme="mmsto" />
+                </intent-filter>
+            </service>
+        </config-file>
+
+        <source-file src="src/android/ComposeSMSActivity.java" target-dir="src/com/ramkumar/cordovaplugins/sms" />
+        <source-file src="src/android/HeadlessSmsSendService.java" target-dir="src/com/ramkumar/cordovaplugins/sms" />
+        <source-file src="src/android/CordovaSMS.java" target-dir="src/com/ramkumar/cordovaplugins/sms" />
+        <source-file src="src/android/receivers/SMSBroadcastReceiver.java" target-dir="src/com/ramkumar/cordovaplugins/sms/receivers" />
+        <source-file src="src/android/receivers/MMSBroadcastReceiver.java" target-dir="src/com/ramkumar/cordovaplugins/sms/receivers" />
+        <source-file src="src/android/models/Conversation.java" target-dir="src/com/ramkumar/cordovaplugins/sms/models" />
+        <source-file src="src/android/models/DataProvider.java" target-dir="src/com/ramkumar/cordovaplugins/sms/models" />
+        <source-file src="src/android/models/Message.java" target-dir="src/com/ramkumar/cordovaplugins/sms/models"/>
+    </platform>
+</plugin>
