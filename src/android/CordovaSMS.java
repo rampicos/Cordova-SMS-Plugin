@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.provider.Telephony;
 import android.util.Log;
@@ -17,60 +18,59 @@ public class CordovaSMS extends CordovaPlugin {
     
     public static CordovaWebView gWebView;
     public static String notificationCallBack = "CordovaSMS.onSMSReceived";
+    public static String defaultSMSDialogCallback = "CordovaSMS.onDefaultSMSDialog";
     private static final String LOG_TAG = CordovaSMS.class.getSimpleName();
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         gWebView = webView;
-
-        String packageName = cordova.getActivity().getPackageName();
-        Log.d(LOG_TAG,"initialize::packageName::"+packageName+":::Telephony data::"+Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()));
-        Log.d(LOG_TAG,""+(packageName.equalsIgnoreCase(Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()))));
-        if(!packageName.equalsIgnoreCase(Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()))){
-            Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-            intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName);
-            cordova.getActivity().startActivity(intent);
-            Log.d(LOG_TAG,"Default SMS Set successfully");
-        }
-
         Log.d(LOG_TAG, "==> CordovaSMSPlugin initialize");
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        String callBack = "javascript:" + defaultSMSDialogCallback + "(" + "false" + ")";
+        if(resultCode == Activity.RESULT_OK){
+            callBack = "javascript:" + defaultSMSDialogCallback + "(" + "true" + ")";
+        }
+        
+        gWebView.sendJavascript(callBack);
+    }    
+
     public boolean execute(final String action, final JSONArray args, final CallbackContext callbackContext) {
-        Log.d(LOG_TAG,"Action Called::"+ action);
-        Log.d(LOG_TAG,"Incoming Object::"+ args.toString());
+        cordova.setActivityResultCallback(this);
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
                             final String packageName = cordova.getActivity().getPackageName();
                             Log.d(LOG_TAG,"State restored 2::packageName::"+packageName+":::Telephony data::"+Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()));
                             if (action.equalsIgnoreCase("sendsms")) {
-                                Log.d(LOG_TAG,"Default SMS mismatch");
                                 if(!packageName.equalsIgnoreCase(Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()))){
-                                    Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-                                    intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName);
-                                    cordova.getActivity().startActivity(intent);
-                                    Log.d(LOG_TAG,"Default SMS Set successfully");
+                                    callbackContext.error("Unable to send SMS, make your app as Default SMS app by calling setDefault method");
                                 }
-                                Log.d(LOG_TAG,"Defult SMS is Your App");
-                                JSONObject argument = args.getJSONObject(0);
-                                String recipient = argument.getString("recipient");
-                                String message = argument.getString("message");
-                                Log.d(LOG_TAG,"Calling send Activity");
-                                ComposeSMSActivity.sendSMS(recipient, message,cordova.getActivity().getApplicationContext());
-                                callbackContext.success("Sending initiated");
-                                
+                                else{
+                                    JSONObject argument = args.getJSONObject(0);
+                                    String recipient = argument.getString("recipient");
+                                    String message = argument.getString("message");
+                                    ComposeSMSActivity.sendSMS(recipient, message,cordova.getActivity().getApplicationContext());
+                                    callbackContext.success("Sending initiated");
+                                }
                             }
-                            else if (action.equalsIgnoreCase("checkdefault")) {
-                                if(!packageName.equalsIgnoreCase(Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()))){
+                             else if (action.equalsIgnoreCase("checkdefault")) {
+                                    JSONObject response = new JSONObject();
+                                    response.put("thisApp",packageName);
+                                    response.put("currentDefault",Telephony.Sms.getDefaultSmsPackage(cordova.getActivity()));
+                                    callbackContext.success(response.toString());
+                                    
+                            }
+                            else if (action.equalsIgnoreCase("setdefault")) {
+                                    String currentSMSDefault = Telephony.Sms.getDefaultSmsPackage(cordova.getActivity());
+                                    JSONObject argument = args.getJSONObject(0);
+                                    String defaultPackage = argument.getString("defaultPackage");
                                     Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-                                    intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName);
-                                    cordova.getActivity().startActivity(intent);
-                                    Log.d(LOG_TAG,"Default SMS Set successfully");
-                                    callbackContext.error("error");
-                                }else{
-                                    callbackContext.success("success");
-                                }
+                                    intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, defaultPackage);
+                                    cordova.getActivity().startActivityForResult(intent,0);
+                                    //callbackContext.success("success");
                             }
                         } catch (JSONException e) {
                              e.printStackTrace();
@@ -85,17 +85,11 @@ public class CordovaSMS extends CordovaPlugin {
     }
 
     public static void sendSMSPayload(String message) {
-        Log.d(LOG_TAG, "==> CordovaSMSPlugin sendSMSPayload");
-        Log.d(LOG_TAG, "\tgWebView: " + gWebView);
-        Log.d(LOG_TAG,"Message Received :: "+ message);
         try {
-            
             String callBack = "javascript:" + notificationCallBack + "(" + message + ")";
             if(gWebView != null){
-                Log.d(LOG_TAG, "\tSent SMS to view: " + callBack);
                 gWebView.sendJavascript(callBack);
             }else {
-                Log.d(LOG_TAG, "\tView not ready. SAVED NOTIFICATION: " + callBack);
                 //lastPush = payload;
             }
         } catch (Exception e) {
@@ -103,5 +97,4 @@ public class CordovaSMS extends CordovaPlugin {
             //lastPush = payload;
         }
     }
-
 }

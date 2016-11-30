@@ -20,12 +20,28 @@ Usage
 
 ```javascript
 
-  var errCallback =function(){
-    alert("You have set this app as default SMS to proceed, kindly click yes");
-    CordovaSMS.checkDefault(function(){},errCallback);
-  };
+CordovaSMS.checkDefault(function(s){
+          console.log(s)
+        }, 
+        function(){});
 
-  CordovaSMS.checkDefault(function(){},errCallback);
+//will respond {"thisApp":"com.yourapp.packagename","currentDefault":"com.android.mms"}
+//thisApp - Package name of your app
+//currentDefault - Current SMS app of the Android
+
+```
+
+### To Set your App as default SMS App
+
+```javascript
+
+CordovaSMS.setDefault(null,null,"com.yourapp.packagename");
+
+//User will be prompt by Android system dialog to change the SMS app, the yes|no button click can be listen trough
+
+CordovaSMS.onDefaultSelected(function(result){
+                    //result value will be true if user hits Yes button, else it will result to false.
+              });
 
 ```
 
@@ -47,7 +63,11 @@ Usage
   var receiver = "Receiver's Mobile number";
   CordovaSMS.sendSMS(receiver,message,successCallback,errorCallback});
 
+  //May receive error on errorCallback if your app was not set as default SMS app by the user. You can change your app as default SMS app by calling setDefault, also call onDefaultSelected to listen user hitting yes or no.
+
 ```
+
+Note: To send SMS your app should be default SMS app, you can use checkDefault and setDefault to make your app as default SMS app.
 
 License
 --------

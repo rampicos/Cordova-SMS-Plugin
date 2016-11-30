@@ -24,6 +24,18 @@ CordovaSMS.prototype.checkDefault= function(success, error ){
     exec(success, error, "CordovaSMS", 'checkdefault', []);
 }
 
+CordovaSMS.prototype.setDefault= function(success, error,defaultPackage ){
+    exec(success, error, "CordovaSMS", 'setdefault', [{"defaultPackage":defaultPackage}]);
+}
+
+CordovaSMS.prototype.onDefaultSelected = function(callback){
+    CordovaSMS.prototype.onDefaultSMSDialog = callback;
+}
+
+CordovaSMS.prototype.onDefaultSMSDialog = function(result){
+console.log(result);
+}
+
 
 //var CordovaSMS = new CordovaSMS();
 module.exports = new CordovaSMS();
